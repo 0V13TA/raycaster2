@@ -1,29 +1,15 @@
 import type Boundary from "./boundaries";
-import { DEG2RAD, RAD2DEG, type Vector2 } from "./utils";
+import { DEG2RAD, type Vector2 } from "./utils";
 
 export default class Ray {
   angle: number;
   origin: Vector2;
-  private color: string;
   private length: number;
   constructor(origin: Vector2, angle: number) {
     // Wrap aroud
     this.angle = ((angle % 360) + 360) % 360;
     this.origin = origin;
-    this.color = "#fff";
     this.length = 1;
-  }
-
-  draw(ctx: CanvasRenderingContext2D) {
-    const length = this.length * 10;
-    const newXpos = this.origin[0] + Math.cos(this.angle * DEG2RAD) * length;
-    const newYpos = this.origin[1] + Math.sin(this.angle * DEG2RAD) * length;
-    ctx.beginPath();
-    ctx.strokeStyle = this.color;
-    ctx.moveTo(this.origin[0], this.origin[1]);
-    ctx.lineTo(newXpos, newYpos);
-    ctx.stroke();
-    ctx.closePath();
   }
 
   cast(wall: Boundary) {
