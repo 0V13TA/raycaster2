@@ -48,16 +48,17 @@ export default class Boundary {
    * Returns a value between 0.0 (exactly at p1) and 1.0 (exactly at p2).
    */
   getHitPercentage(hitPoint: Vector2): number {
-    const dx = Math.abs(this.p2[0] - this.p1[0]);
-    const dy = Math.abs(this.p2[1] - this.p1[1]);
+    const x1 = this.p1[0];
+    const y1 = this.p1[1];
+    const x2 = this.p2[0];
+    const y2 = this.p2[1];
 
-    // If the wall is more horizontal, use the global X coordinate.
-    // If it is more vertical, use the global Y coordinate.
-    if (dx > dy) {
-      return hitPoint[0];
-    } else {
-      return hitPoint[1];
-    }
+    const segLengthSq = (x2 - x1) ** 2 + (y2 - y1) ** 2;
+    if (segLengthSq === 0) return 0;
+
+    // Projection math to find distance from p1 to hitPoint normalized by segment length
+    const currentDistSq = (hitPoint[0] - x1) ** 2 + (hitPoint[1] - y1) ** 2;
+    return Math.sqrt(currentDistSq / segLengthSq);
   }
 
   /**
