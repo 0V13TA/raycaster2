@@ -32,10 +32,17 @@ const H = canvas.height;
 const p = (x: number, y: number): [number, number] => [x * W, y * H];
 
 // --- 1. DEFINE BEAUTIFUL THEMED MATERIALS ---
-const outerWallMat = new Material({ color: [60, 60, 75, 1] }); // Dark slate gray
-const castleTowerMat = new Material({ color: [180, 100, 40, 1] }); // Warm brick orange/red
+const outerWallMat = new Material({
+  color: [60, 60, 75, 1],
+  textureSrc: "../public/pics/mossy.png",
+}); // Dark slate gray
+const castleTowerMat = new Material({
+  color: [180, 100, 40, 1],
+  textureSrc: "../public/pics/purplestone.png",
+}); // Warm brick orange/red
 const pillarsMat = new Material({
   color: [40, 160, 100, 1],
+  textureSrc: "../public/pics/redbrick.png",
 }); // Jade/Emerald green
 
 // --- 2. THE CASTLE COURTYARD MAP CONFIGURATION ---
@@ -144,7 +151,4 @@ function animate(currentTime: number): void {
 
 // Global execution hooks
 Input.init();
-canvas.addEventListener("mousemove", (e) => {
-  player.move([e.offsetX, e.offsetY]);
-});
 animationID = requestAnimationFrame(animate);

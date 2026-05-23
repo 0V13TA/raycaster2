@@ -1,9 +1,10 @@
+// src/Scene.ts
 import Boundary from "./boundaries";
 import type Material from "./Material";
 import type Player from "./player";
 import Ray from "./ray";
-import type { Color, Vector2 } from "./Types";
-import { distanceBtwVectors, drawLine } from "./utils";
+import type { Vector2 } from "./Types";
+import { distanceBtwVectors } from "./utils";
 
 export default class Scene {
   private rays: Ray[];
@@ -14,8 +15,8 @@ export default class Scene {
   private screenWidth: number;
   private screenHeight: number;
 
-  private deltaAngle: number; // Angle step between rays in degrees
-  private leftMostRayAngle: number; // Angle of the leftmost ray in degrees
+  private deltaAngle: number;
+  private leftMostRayAngle: number;
 
   public floorMaterial: Material;
   public ceilingMaterial: Material;
@@ -31,7 +32,6 @@ export default class Scene {
     this.boundaries = [];
 
     this.player = player;
-
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
 
@@ -42,12 +42,8 @@ export default class Scene {
     this.ceilingMaterial = ceilingMaterial;
 
     for (let i = 0; i < screenWidth; i += 1) {
-      // 4. Multiply i by deltaAngle so the rays actually spread across the fan!
       const currentAngle = this.leftMostRayAngle + i * this.deltaAngle;
-
-      // Keep the degree values strictly between 0 and 360
       const angle = ((currentAngle % 360) + 360) % 360;
-
       const ray = new Ray(player.position, angle);
       this.rays.push(ray);
     }
@@ -75,102 +71,8 @@ export default class Scene {
     return { recordDistance, closestPoint, bound };
   }
 
-  // render(ctx1: CanvasRenderingContext2D, ctx2: CanvasRenderingContext2D) {
-  //   // Ceiling takes up top half
-  //   this.ceilingMaterial.drawBackground(
-  //     ctx2,
-  //     0,
-  //     0,
-  //     this.screenWidth,
-  //     this.screenHeight / 2,
-  //   );
-  //
-  //   // Floor takes up bottom half
-  //   this.floorMaterial.drawBackground(
-  //     ctx2,
-  //     0,
-  //     this.screenHeight / 2,
-  //     this.screenWidth,
-  //     this.screenHeight / 2,
-  //   );
-  //
-  //   const deltaAngle = this.player.fov / this.screenWidth;
-  //   const leftMostRayAngle = this.player.viewAngle - this.player.halfFov;
-  //
-  //   for (let i = 0; i < this.screenWidth; i++) {
-  //     const ray = this.rays[i];
-  //     // Update ray position and angle relative to the player's current frame state
-  //     ray.origin = this.player.position;
-  //     ray.angle = (((leftMostRayAngle + i * deltaAngle) % 360) + 360) % 360;
-  //
-  //     const { closestPoint, recordDistance, bound } = this.castRay(ray);
-  //     if (
-  //       bound === null ||
-  //       closestPoint === null ||
-  //       recordDistance === Infinity
-  //     )
-  //       continue;
-  //
-  //     drawLine(this.player.position, closestPoint, 1, [255, 255, 255, 1], ctx1);
-  //     // --- Draw the 3D Pseudo View (Canvas 2) ---
-  //     // Fix perspective distortion (fish-eye effect)
-  //     const correctedDistance =
-  //       recordDistance *
-  //       Math.cos((ray.angle - this.player.viewAngle) * (Math.PI / 180));
-  //
-  //     const lineHeight = (this.screenHeight * 20) / correctedDistance; // Scale height by distance
-  //     const clampedHeight = Math.min(lineHeight, this.screenHeight);
-  //
-  //     // 1. Get the wall surface normal vector
-  //     const normal = bound.getNormal();
-  //
-  //     // 2. Extract the ray's forward facing unit components
-  //     const rayDirX = Math.cos(ray.angle * (Math.PI / 180));
-  //     const rayDirY = Math.sin(ray.angle * (Math.PI / 180));
-  //
-  //     // 3. Compute the Dot Product (measures alignment between -1.0 and 1.0)
-  //     // Math.abs handles hits coming from either side of the wall asset
-  //     const dotProduct = Math.abs(rayDirX * normal[0] + rayDirY * normal[1]);
-  //
-  //     // 4. Transform alignment into a natural shading multiplier
-  //     // Walls hit dead-on (perpendicularly) look fully bright.
-  //     // Walls glanced at a steep, shallow angle look progressively darker.
-  //     const directionalShade = 0.4 + dotProduct * 0.6; // Scales lighting range between 40% and 100%
-  //
-  //     // 5. Calculate final distance dimming
-  //     const maxRange = 400;
-  //     const distancePercent = -((correctedDistance / maxRange) * 100);
-  //
-  //     // Combine spatial distance degradation with the directional layout
-  //     const finalShadePercent = distancePercent * (2 - directionalShade);
-  //
-  //     const baseColor: Color = bound.material
-  //       ? bound.material.color
-  //       : [255, 255, 255, 1];
-  //     const finalColor = bound.material
-  //       ? bound.material.shadeColor(finalShadePercent)
-  //       : baseColor;
-  //
-  //     // Calculate vertical column bounds
-  //     const yStart = this.screenHeight / 2 - clampedHeight / 2;
-  //
-  //     // --- DRAW AN ABSOLUTELY OPAQUE SOLID WALL SLICE USING RECT-FILL ---
-  //     ctx2.save();
-  //     // Force alpha channel to a strict 1.0 to guarantee zero background bleeding
-  //     ctx2.fillStyle = `rgba(${finalColor[0]}, ${finalColor[1]}, ${finalColor[2]}, 1.0)`;
-  //     // Draw a crisp 1-pixel wide block from yStart down to clampedHeight
-  //     ctx2.fillRect(i, yStart, 1, clampedHeight);
-  //     ctx2.restore();
-  //   }
-  // }
-
-  // src/Scene.ts -> Replace your current render() method with this optimized method:
   render(ctx1: CanvasRenderingContext2D, ctx2: CanvasRenderingContext2D) {
-    // Clear screen to prepare target buffers
-    ctx2.fillStyle = "#0f0f14";
-    ctx2.fillRect(0, 0, this.screenWidth, this.screenHeight);
-
-    // High-performance direct per-pixel screen manipulation buffer
+    // 1. Initialize screen pixel tracking buffer structures
     const screenBuffer = ctx2.createImageData(
       this.screenWidth,
       this.screenHeight,
@@ -180,10 +82,17 @@ export default class Scene {
     const halfH = this.screenHeight / 2;
     const playerAngleRad = this.player.viewAngle * (Math.PI / 180);
 
-    // Cache trace results for walls to draw them on top later
-    const columnWalls: Array<{ yStart: number; height: number; color: Color }> =
-      [];
+    // --- SECONDARY CACHE MAPS ---
+    interface WallJob {
+      yStart: number;
+      height: number;
+      u: number;
+      shading: number;
+      material: Material | null;
+    }
+    const wallJobs: WallJob[] = [];
 
+    // --- HORIZONTAL SCREEN COLUMN RAY SCANNER ---
     for (let i = 0; i < this.screenWidth; i++) {
       const ray = this.rays[i];
       ray.origin = this.player.position;
@@ -194,23 +103,28 @@ export default class Scene {
         360;
 
       const { closestPoint, recordDistance, bound } = this.castRay(ray);
+
       let wallHeight = 0;
       let wallYStart = halfH;
+      let hitU = 0;
+      let combinedLighting = 1.0;
 
       if (
         bound !== null &&
         closestPoint !== null &&
         recordDistance !== Infinity
       ) {
-        // 2D top-down helper line
-        drawLine(
-          this.player.position,
-          closestPoint,
-          1,
-          [255, 255, 255, 0.2],
-          ctx1,
-        );
+        // Draw 2D Top-Down View line traces
+        ctx1.save();
+        ctx1.beginPath();
+        ctx1.lineWidth = 1;
+        ctx1.strokeStyle = "rgba(255, 255, 255, 0.15)";
+        ctx1.moveTo(this.player.position[0], this.player.position[1]);
+        ctx1.lineTo(closestPoint[0], closestPoint[1]);
+        ctx1.stroke();
+        ctx1.restore();
 
+        // Calculate perspective depth corrections
         const correctedDistance =
           recordDistance *
           Math.cos((ray.angle - this.player.viewAngle) * (Math.PI / 180));
@@ -218,97 +132,102 @@ export default class Scene {
         wallHeight = Math.floor(Math.min(lineHeight, this.screenHeight));
         wallYStart = Math.floor(halfH - wallHeight / 2);
 
-        // Normal dot shading configuration calculations
+        // 1. Compute textured wall column interpolation coordinate (u)
+        hitU = bound.getHitPercentage(closestPoint);
+
+        // 2. Compute dynamic surface normal alignment lighting
         const normal = bound.getNormal();
         const rayDirX = Math.cos(ray.angle * (Math.PI / 180));
         const rayDirY = Math.sin(ray.angle * (Math.PI / 180));
         const dotProduct = Math.abs(rayDirX * normal[0] + rayDirY * normal[1]);
-        const directionalShade = 0.4 + dotProduct * 0.6;
-        const maxRange = 400;
-        const distancePercent = -((correctedDistance / maxRange) * 100);
-        const finalShadePercent = distancePercent * (2 - directionalShade);
+        const directionalShade = 0.5 + dotProduct * 0.5;
 
-        const baseColor: Color = bound.material
-          ? bound.material.color
-          : [255, 255, 255, 1];
-        const wallColor = bound.material
-          ? bound.material.shadeColor(finalShadePercent)
-          : baseColor;
+        // 3. Compute metric distance light dissipation coefficient
+        const distanceFade = Math.max(0, 1 - correctedDistance / 400);
+        combinedLighting = distanceFade * directionalShade;
 
-        columnWalls[i] = {
+        wallJobs[i] = {
           yStart: wallYStart,
           height: wallHeight,
-          color: wallColor,
+          u: hitU,
+          shading: combinedLighting,
+          material: bound.material,
         };
       } else {
-        columnWalls[i] = { yStart: halfH, height: 0, color: [0, 0, 0, 1] };
+        wallJobs[i] = {
+          yStart: halfH,
+          height: 0,
+          u: 0,
+          shading: 0,
+          material: null,
+        };
       }
 
-      // --- 3D PERSPECTIVE ENVIRONMENT PROJECTION ---
+      // --- PERSPECTIVE FLOOR & CEILING BACKGROUND SCANNER ---
       const rayAngleRad = ray.angle * (Math.PI / 180);
       const cosRay = Math.cos(rayAngleRad);
       const sinRay = Math.sin(rayAngleRad);
       const cosBeta = Math.cos(rayAngleRad - playerAngleRad);
 
-      // Render from the bottom of this specific wall slice down to the screen edge
+      // Start rendering backgrounds right at the base of this column's wall segment
       const bottomOfWall = Math.floor(halfH + wallHeight / 2);
 
       for (let y = bottomOfWall; y < this.screenHeight; y++) {
         if (y <= halfH) continue;
 
-        // Calculate absolute 3D perspective distance matching this specific screen height slice
+        // True geometric perspective mapping vector calculations
         const distance = (this.screenHeight * 10) / (y - halfH) / cosBeta;
-
-        // Project coordinates outward in world map space
         const spaceX = this.player.position[0] + cosRay * distance;
         const spaceY = this.player.position[1] + sinRay * distance;
-
-        // Distance fading shadow coefficient factor
         const shadow = Math.max(0, 1 - distance / 350);
 
-        // 1. Process Floor Textures if the flag matches
+        // Draw Floor Pixels
         if (this.floorMaterial.isFloor) {
-          // Generate scale coordinates (dividing by a metric factor like 32 tiles things cleanly)
           const u = spaceX / 32;
           const v = spaceY / 32;
-          const sampledColor = this.floorMaterial.sampleTexture(u, v);
-
+          const color = this.floorMaterial.sampleTexture(u, v);
           const pixelIdx = (y * this.screenWidth + i) * 4;
-          data[pixelIdx] = Math.round(sampledColor[0] * shadow);
-          data[pixelIdx + 1] = Math.round(sampledColor[1] * shadow);
-          data[pixelIdx + 2] = Math.round(sampledColor[2] * shadow);
+          data[pixelIdx] = Math.round(color[0] * shadow);
+          data[pixelIdx + 1] = Math.round(color[1] * shadow);
+          data[pixelIdx + 2] = Math.round(color[2] * shadow);
           data[pixelIdx + 3] = 255;
         }
 
-        // 2. Process Ceiling Textures (Inverted mirror index on the top screen half)
+        // Draw Ceiling Pixels
         if (this.ceilingMaterial.isCeiling) {
           const u = spaceX / 32;
           const v = spaceY / 32;
-          const sampledColor = this.ceilingMaterial.sampleTexture(u, v);
-
+          const color = this.ceilingMaterial.sampleTexture(u, v);
           const ceilingY = this.screenHeight - y - 1;
           const pixelIdx = (ceilingY * this.screenWidth + i) * 4;
-          data[pixelIdx] = Math.round(sampledColor[0] * shadow);
-          data[pixelIdx + 1] = Math.round(sampledColor[1] * shadow);
-          data[pixelIdx + 2] = Math.round(sampledColor[2] * shadow);
+          data[pixelIdx] = Math.round(color[0] * shadow);
+          data[pixelIdx + 1] = Math.round(color[1] * shadow);
+          data[pixelIdx + 2] = Math.round(color[2] * shadow);
           data[pixelIdx + 3] = 255;
         }
       }
     }
 
-    // Blit the perspective background pixel layout directly into view
-    ctx2.putImageData(screenBuffer, 0, 0);
-
-    // Overlay completely opaque wall slices cleanly on top
+    // --- OVERLAY TEXTURED WALL SLICES DIRECTLY OVER BACKDROP BUFFER ---
     for (let i = 0; i < this.screenWidth; i++) {
-      const wall = columnWalls[i];
-      if (!wall || wall.height === 0) continue;
+      const job = wallJobs[i];
+      if (!job || job.height === 0 || !job.material) continue;
 
-      ctx2.save();
-      ctx2.fillStyle = `rgba(${wall.color[0]}, ${wall.color[1]}, ${wall.color[2]}, 1.0)`;
-      ctx2.fillRect(i, wall.yStart, 1, wall.height);
-      ctx2.restore();
+      // Delegate pixel extraction directly to the wall's material properties
+      job.material.drawWallColumn(
+        data,
+        this.screenWidth,
+        this.screenHeight,
+        i,
+        job.yStart,
+        job.height,
+        job.u,
+        job.shading,
+      );
     }
+
+    // 5. Blit finalized image buffer instantly onto 3D graphics monitor view
+    ctx2.putImageData(screenBuffer, 0, 0);
   }
 
   draw(ctx: CanvasRenderingContext2D) {
@@ -317,6 +236,6 @@ export default class Scene {
   }
 
   update(dt: number) {
-    this.player.update(dt);
+    this.player.update(dt, this.boundaries);
   }
 }
