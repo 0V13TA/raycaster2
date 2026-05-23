@@ -1,72 +1,46 @@
-import type Boundary from "./boundaries";
-import Ray from "./ray";
-import { type Vector2 } from "./utils";
+import type { Vector2 } from "./Types";
+import { DEG2RAD, Input, normalizeVector, RAD2DEG } from "./utils";
 
 export default class Player {
-  position: Vector2;
-  rays: Ray[];
   fov: number;
-  dir: number;
+  dir: Vector2;
   halfFov: number;
+  position: Vector2;
+  viewAngle: number; // Angle the player is looking at in degrees
   constructor(position: Vector2) {
-    this.position = position;
-    this.rays = [];
-    this.fov = Math.PI / 2;
-    this.halfFov = this.fov / 2;
-    this.dir = 0;
+    this.position = [...position] as Vector2; // Break reference links
 
-    for (let i = 0; i < 90; i += 1) {
-      const ray = new Ray(position, i);
-      this.rays.push(ray);
-    }
+    this.fov = (Math.PI / 2) * RAD2DEG;
+    this.halfFov = this.fov / 2;
+
+    this.dir = [1, 0];
+    this.viewAngle = Math.atan2(this.dir[1], this.dir[0]) * RAD2DEG;
   }
 
-  lookAt(target: Vector2) {
-    this.position[0] = target[0];
-    this.position[1] = target[1];
+  lookAt(angle: number) {
+    this.viewAngle = ((angle % 360) + 360) % 360; // Wrap around
+    this.dir = normalizeVector([
+      Math.cos(angle * DEG2RAD),
+      Math.sin(angle * DEG2RAD),
+    ]);
+  }
+
+  move(position: Vector2) {
+    this.position = position;
   }
 
   draw(ctx: CanvasRenderingContext2D) {
     ctx.save();
     ctx.beginPath();
     ctx.fillStyle = "#fff";
-    ctx.arc(this.position[0], this.position[1], 7, 0, Math.PI * 2);
+    ctx.arc(this.position[0], this.position[1], 5, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
 
-  look(walls: Boundary[], ctx: CanvasRenderingContext2D) {
-    const points: number[] = [];
-    for (let ray of this.rays) {
-      let recordDistance = Infinity;
-      let closestPoint: Vector2 | null = null;
-      for (let wall of walls) {
-        const point = ray.cast(wall);
-        if (point !== null) {
-          const distance = Math.sqrt(
-            (ray.origin[0] - point[0]) ** 2 + (ray.origin[1] - point[1]) ** 2,
-          );
-
-          if (distance < recordDistance) {
-            recordDistance = distance;
-            closestPoint = point;
-          }
-        }
-      }
-
-      if (closestPoint) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.strokeStyle = "rgba(255,255,255,0.5)";
-        ctx.moveTo(this.position[0], this.position[1]);
-        ctx.lineTo(closestPoint[0], closestPoint[1]);
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.closePath();
-        ctx.restore();
-      }
-      points.push(recordDistance);
-    }
-    return points;
+  update(dt: number) {
+    if (Input.isHeld("ArrowLeft")) this.viewAngle -= 90 * dt;
+    if (Input.isHeld("ArrowRight")) this.viewAngle += 90 * dt;
+    this.lookAt(this.viewAngle);
   }
 }

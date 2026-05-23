@@ -1,5 +1,4 @@
-//#region Type Definitions
-type KeyCode = string;
+import type { BoxEntity, Color, KeyCode, Vector2 } from "./Types";
 
 interface Timer {
   id: number;
@@ -10,17 +9,70 @@ interface Timer {
   callback: () => void;
 }
 
-export interface BoxEntity {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export type Vector2 = [x: number, y: number];
 //#endregion
 export const DEG2RAD = Math.PI / 180;
 export const RAD2DEG = 180 / Math.PI;
+
+export function normalizeVector(vec: Vector2): Vector2 {
+  const length = Math.sqrt(vec[0] * vec[0] + vec[1] * vec[1]);
+  if (length === 0) return [0, 0];
+  return [vec[0] / length, vec[1] / length];
+}
+
+export function distanceBtwVectors(v1: Vector2, v2: Vector2) {
+  return Math.sqrt((v2[0] - v1[0]) ** 2 + (v2[1] - v1[1]) ** 2);
+}
+
+// Version with opacity support (0-255 or 0-1)
+export function colorToRGBA(
+  color: Color,
+  normalizeAlpha: boolean = true,
+): string {
+  let [r, g, b, a] = color;
+
+  // Clamp RGB
+  r = Math.min(255, Math.max(0, Math.round(r)));
+  g = Math.min(255, Math.max(0, Math.round(g)));
+  b = Math.min(255, Math.max(0, Math.round(b)));
+
+  // Handle alpha normalization
+  if (normalizeAlpha) {
+    // If alpha > 1, assume it's 0-255 range, convert to 0-1
+    a = a > 1 ? a / 255 : a;
+  }
+  a = Math.min(1, Math.max(0, a));
+
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+export const Colors = {
+  red: (alpha: number = 1): string => colorToRGBA([255, 0, 0, alpha]),
+  green: (alpha: number = 1): string => colorToRGBA([0, 255, 0, alpha]),
+  blue: (alpha: number = 1): string => colorToRGBA([0, 0, 255, alpha]),
+  white: (alpha: number = 1): string => colorToRGBA([255, 255, 255, alpha]),
+  black: (alpha: number = 1): string => colorToRGBA([0, 0, 0, alpha]),
+
+  // Custom color creator
+  custom: (r: number, g: number, b: number, a: number = 1): string =>
+    colorToRGBA([r, g, b, a]),
+};
+
+export function drawLine(
+  start: Vector2,
+  end: Vector2,
+  width: number,
+  color: Color,
+  ctx: CanvasRenderingContext2D,
+) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(start[0], start[1]);
+  ctx.lineTo(end[0], end[1]);
+  ctx.lineWidth = width;
+  ctx.strokeStyle = colorToRGBA(color);
+  ctx.stroke();
+  ctx.restore();
+}
 
 // --- Timer Manager ---
 export const TimerManager = {

@@ -1,8 +1,10 @@
-import type { Vector2 } from "./utils";
+import type Material from "./Material";
+import type { Vector2 } from "./Types";
 
 export default class Boundary {
   p1: Vector2;
   p2: Vector2;
+  material: Material | null = null;
 
   constructor(p1: Vector2, p2: Vector2) {
     this.p1 = p1;

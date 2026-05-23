@@ -1,5 +1,6 @@
 import type Boundary from "./boundaries";
-import { DEG2RAD, type Vector2 } from "./utils";
+import type { Vector2 } from "./Types";
+import { DEG2RAD } from "./utils";
 
 export default class Ray {
   angle: number;
@@ -9,7 +10,7 @@ export default class Ray {
     // Wrap aroud
     this.angle = ((angle % 360) + 360) % 360;
     this.origin = origin;
-    this.length = 1;
+    this.length = 500000;
   }
 
   cast(wall: Boundary) {
