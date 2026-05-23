@@ -1,7 +1,10 @@
+// src/main.ts
 import "./style.css";
 import Boundary from "./boundaries";
 import { Input, TimerManager } from "./utils";
 import Player from "./player";
+import Scene from "./Scene";
+import Material from "./Material";
 
 //#region Init
 export const canvas = document.createElement("canvas");
@@ -23,114 +26,75 @@ let animationID: number;
 let lastTime: number = 0;
 //#endregion
 
-//#region Walls and boundaries
-// Helpers
+// Coordinate Helper
 const W = canvas.width;
 const H = canvas.height;
 const p = (x: number, y: number): [number, number] => [x * W, y * H];
 
-// Test 1: Simple square boundaries (relative)
-export const squareBoundaries = [
-  new Boundary(p(0.125, 0.1667), p(0.625, 0.1667)), // top wall
-  new Boundary(p(0.625, 0.1667), p(0.625, 0.6667)), // right wall
-  new Boundary(p(0.625, 0.6667), p(0.125, 0.6667)), // bottom wall
-  new Boundary(p(0.125, 0.6667), p(0.125, 0.1667)), // left wall
-];
+// --- 1. DEFINE BEAUTIFUL THEMED MATERIALS ---
+const outerWallMat = new Material({ color: [60, 60, 75, 1] }); // Dark slate gray
+const castleTowerMat = new Material({ color: [180, 100, 40, 1] }); // Warm brick orange/red
+const pillarsMat = new Material({ color: [40, 160, 100, 1] }); // Jade/Emerald green
 
-// Test 2: Star-shaped boundary (relative)
-export const starBoundaries = [
-  new Boundary(p(0.5, 0.1667), p(0.5625, 0.3333)),
-  new Boundary(p(0.5625, 0.3333), p(0.6875, 0.3667)),
-  new Boundary(p(0.6875, 0.3667), p(0.6, 0.4667)),
-  new Boundary(p(0.6, 0.4667), p(0.625, 0.6333)),
-  new Boundary(p(0.625, 0.6333), p(0.5, 0.55)),
-  new Boundary(p(0.5, 0.55), p(0.375, 0.6333)),
-  new Boundary(p(0.375, 0.6333), p(0.4, 0.4667)),
-  new Boundary(p(0.4, 0.4667), p(0.3125, 0.3667)),
-  new Boundary(p(0.3125, 0.3667), p(0.4375, 0.3333)),
-  new Boundary(p(0.4375, 0.3333), p(0.5, 0.1667)),
-];
+// --- 2. THE CASTLE COURTYARD MAP CONFIGURATION ---
+const castleMap: Boundary[] = [];
 
-// Test 3: Maze-like boundaries (relative)
-export const mazeBoundaries = [
-  // Outer walls
-  new Boundary(p(0.0625, 0.0833), p(0.9375, 0.0833)),
-  new Boundary(p(0.9375, 0.0833), p(0.9375, 0.9167)),
-  new Boundary(p(0.9375, 0.9167), p(0.0625, 0.9167)),
-  new Boundary(p(0.0625, 0.9167), p(0.0625, 0.0833)),
+// Helper to safely create a wall with an assigned material
+function createWall(
+  p1: [number, number],
+  p2: [number, number],
+  material: Material,
+) {
+  const wall = new Boundary(p1, p2);
+  wall.material = material;
+  castleMap.push(wall);
+}
 
-  // Inner walls - vertical
-  new Boundary(p(0.25, 0.0833), p(0.25, 0.3333)),
-  new Boundary(p(0.25, 0.5), p(0.25, 0.75)),
-  new Boundary(p(0.5, 0.25), p(0.5, 0.5833)),
-  new Boundary(p(0.75, 0.0833), p(0.75, 0.4167)),
-  new Boundary(p(0.75, 0.5833), p(0.75, 0.9167)),
+// A. Outer Boundary Citadel Walls
+createWall(p(0.05, 0.05), p(0.95, 0.05), outerWallMat); // Top outer boundary
+createWall(p(0.95, 0.05), p(0.95, 0.95), outerWallMat); // Right outer boundary
+createWall(p(0.95, 0.95), p(0.05, 0.95), outerWallMat); // Bottom outer boundary
+createWall(p(0.05, 0.95), p(0.05, 0.05), outerWallMat); // Left outer boundary
 
-  // Inner walls - horizontal
-  new Boundary(p(0.0625, 0.3333), p(0.4375, 0.3333)),
-  new Boundary(p(0.3125, 0.5833), p(0.6875, 0.5833)),
-  new Boundary(p(0.5625, 0.1667), p(0.9375, 0.1667)),
-  new Boundary(p(0.4375, 0.75), p(0.8125, 0.75)),
-];
+// B. Central Castle Tower (With a doorway on the left side)
+createWall(p(0.4, 0.4), p(0.6, 0.4), castleTowerMat); // Tower Top Wall
+createWall(p(0.6, 0.4), p(0.6, 0.6), castleTowerMat); // Tower Right Wall
+createWall(p(0.6, 0.6), p(0.4, 0.6), castleTowerMat); // Tower Bottom Wall
+createWall(p(0.4, 0.6), p(0.4, 0.53), castleTowerMat); // Tower Left Wall (Lower half)
+createWall(p(0.4, 0.47), p(0.4, 0.4), castleTowerMat); // Tower Left Wall (Upper half - leaves an opening!)
 
-// Test 4: Circular approximation (octagon)
-const octagonBoundaries = (
-  centerX: number,
-  centerY: number,
-  radius: number,
-) => {
-  const points: [number, number][] = [];
-  const sides = 8;
+// C. Scattered Diagonal Courtyard Pillars (Tests your vector diagonal precision)
+// Top-Left Triangular Pillar
+createWall(p(0.2, 0.2), p(0.25, 0.2), pillarsMat);
+createWall(p(0.25, 0.2), p(0.2, 0.25), pillarsMat);
+createWall(p(0.2, 0.25), p(0.2, 0.2), pillarsMat);
 
-  for (let i = 0; i < sides; i++) {
-    const angle = (i * 2 * Math.PI) / sides;
+// Top-Right Diamond Pillar
+createWall(p(0.75, 0.2), p(0.8, 0.25), pillarsMat);
+createWall(p(0.8, 0.25), p(0.75, 0.3), pillarsMat);
+createWall(p(0.75, 0.3), p(0.7, 0.25), pillarsMat);
+createWall(p(0.7, 0.25), p(0.75, 0.2), pillarsMat);
 
-    // Scale radius independently for width/height
-    const x = centerX + radius * Math.cos(angle);
-    const y = centerY + radius * Math.sin(angle);
+// Bottom-Right V-Shaped Retaining Wall
+createWall(p(0.7, 0.7), p(0.8, 0.7), pillarsMat);
+createWall(p(0.8, 0.7), p(0.8, 0.8), pillarsMat);
 
-    points.push([x * W, y * H]);
-  }
+// Bottom-Left Hexagonal Spire Base
+createWall(p(0.2, 0.7), p(0.25, 0.67), pillarsMat);
+createWall(p(0.25, 0.67), p(0.28, 0.72), pillarsMat);
+createWall(p(0.28, 0.72), p(0.25, 0.77), pillarsMat);
+createWall(p(0.25, 0.77), p(0.2, 0.75), pillarsMat);
+createWall(p(0.2, 0.75), p(0.17, 0.7), pillarsMat);
+createWall(p(0.17, 0.7), p(0.2, 0.7), pillarsMat);
 
-  return points.map((point, i) => {
-    const nextPoint = points[(i + 1) % points.length];
-    return new Boundary(point, nextPoint);
-  });
-};
-
-// Relative values
-export const circularBoundary = octagonBoundaries(0.5, 0.5, 0.25);
-
-// Test 5: Spiral/zigzag pattern (relative)
-export const spiralBoundaries = [
-  new Boundary(p(0.125, 0.1667), p(0.25, 0.1667)),
-  new Boundary(p(0.25, 0.1667), p(0.25, 0.3333)),
-  new Boundary(p(0.25, 0.3333), p(0.125, 0.3333)),
-  new Boundary(p(0.125, 0.3333), p(0.125, 0.25)),
-  new Boundary(p(0.125, 0.25), p(0.1875, 0.25)),
-  new Boundary(p(0.1875, 0.25), p(0.1875, 0.2917)),
-  new Boundary(p(0.1875, 0.2917), p(0.15625, 0.2917)),
-  new Boundary(p(0.15625, 0.2917), p(0.15625, 0.2708)),
-];
-
-//#endregion
-
-const player = new Player([canvas.width - 20, canvas.height / 2]);
-
-const currentWall = starBoundaries;
-// Update the bottom area of your src/main.ts
-import Scene from "./Scene";
-import Material from "./Material";
+// Spawn the player safely outside the central fortress tower
+const player = new Player([W * 0.15, H * 0.5]);
 
 // Create a pseudo-3D scene manager
 const scene = new Scene(player, canvas2.width, canvas2.height);
 
-// Define materials
-const wallMaterial = new Material({ color: [0, 200, 255, 1] });
-
-// Bind walls to scene boundaries
-currentWall.forEach((wall) => {
-  wall.material = wallMaterial; // assign our material config
+// Load our new vector map layout into the scene renderer
+castleMap.forEach((wall) => {
   scene.addBoundary(wall);
 });
 

@@ -63,6 +63,18 @@ export default class Scene {
   }
 
   render(ctx1: CanvasRenderingContext2D, ctx2: CanvasRenderingContext2D) {
+    // --- Draw Ceiling & Floor Backgrounds on Canvas 2 ---
+    ctx2.fillStyle = "#1e1e24"; // Dark Sky Color
+    ctx2.fillRect(0, 0, this.screenWidth, this.screenHeight / 2);
+
+    ctx2.fillStyle = "#2d2d30"; // Solid Floor Color
+    ctx2.fillRect(
+      0,
+      this.screenHeight / 2,
+      this.screenWidth,
+      this.screenHeight / 2,
+    );
+
     const deltaAngle = this.player.fov / this.screenWidth;
     const leftMostRayAngle = this.player.viewAngle - this.player.halfFov;
 
