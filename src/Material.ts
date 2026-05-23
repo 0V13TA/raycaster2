@@ -99,7 +99,9 @@ export default class Material {
     }
 
     // Determine which exact horizontal pixel column to read from the image
-    const tx = Math.floor(u * this.textureWidth) % this.textureWidth;
+    const scaleFactor = 1.0;
+    let tx = Math.floor(u * scaleFactor) % this.textureWidth;
+    if (tx < 0) tx += this.textureWidth; // Handle any negative bounds errors cleanly
 
     for (let y = 0; y < clampedHeight; y++) {
       const screenY = yStart + y;

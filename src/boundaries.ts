@@ -48,20 +48,17 @@ export default class Boundary {
    * Returns a value between 0.0 (exactly at p1) and 1.0 (exactly at p2).
    */
   getHitPercentage(hitPoint: Vector2): number {
-    const totalLength = Math.sqrt(
-      (this.p2[0] - this.p1[0]) ** 2 + (this.p2[1] - this.p1[1]) ** 2,
-    );
-    if (totalLength === 0) return 0;
+    const dx = Math.abs(this.p2[0] - this.p1[0]);
+    const dy = Math.abs(this.p2[1] - this.p1[1]);
 
-    // Calculate distance from starting point p1 out to the intersection point
-    const hitLength = Math.sqrt(
-      (hitPoint[0] - this.p1[0]) ** 2 + (hitPoint[1] - this.p1[1]) ** 2,
-    );
-
-    return hitLength / totalLength;
+    // If the wall is more horizontal, use the global X coordinate.
+    // If it is more vertical, use the global Y coordinate.
+    if (dx > dy) {
+      return hitPoint[0];
+    } else {
+      return hitPoint[1];
+    }
   }
-
-  // src/boundaries.ts
 
   /**
    * Finds the closest coordinate point on this wall segment to an external target point.

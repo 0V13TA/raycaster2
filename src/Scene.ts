@@ -128,7 +128,10 @@ export default class Scene {
         const correctedDistance =
           recordDistance *
           Math.cos((ray.angle - this.player.viewAngle) * (Math.PI / 180));
-        const lineHeight = (this.screenHeight * 20) / correctedDistance;
+        const wallScale = 32; // Tweak this number to make walls taller or shorter
+        const lineHeight = Math.floor(
+          (this.screenHeight * wallScale) / (correctedDistance || 1),
+        );
         wallHeight = Math.floor(Math.min(lineHeight, this.screenHeight));
         wallYStart = Math.floor(halfH - wallHeight / 2);
 

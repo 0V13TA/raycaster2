@@ -16,7 +16,7 @@ export default class Player {
 
   constructor(position: Vector2) {
     this.position = [...position] as Vector2;
-    this.fov = 60; //(Math.PI / 2) * RAD2DEG; // 90 Degrees
+    this.fov = (Math.PI / 2) * RAD2DEG; // 90 Degrees
     this.halfFov = this.fov / 2;
     this.dir = [1, 0];
     this.viewAngle = 0;
