@@ -39,8 +39,29 @@ export default class Player {
   }
 
   update(dt: number) {
+    // --- Rotate Angle ---
     if (Input.isHeld("ArrowLeft")) this.viewAngle -= 90 * dt;
     if (Input.isHeld("ArrowRight")) this.viewAngle += 90 * dt;
+
+    // --- Move Foward and backwards ---
+    if (Input.isHeld("ArrowUp")) {
+      this.position[0] += this.dir[0] * 100 * dt;
+      this.position[1] += this.dir[1] * 100 * dt;
+    }
+    if (Input.isHeld("ArrowDown")) {
+      this.position[0] -= this.dir[0] * 100 * dt;
+      this.position[1] -= this.dir[1] * 100 * dt;
+    }
+
+    // --- Strafe Left and Right ---
+    if (Input.isHeld("KeyA")) {
+      this.position[0] -= this.dir[1] * 100 * dt;
+      this.position[1] += this.dir[0] * 100 * dt;
+    }
+    if (Input.isHeld("KeyD")) {
+      this.position[0] += this.dir[1] * 100 * dt;
+      this.position[1] -= this.dir[0] * 100 * dt;
+    }
     this.lookAt(this.viewAngle);
   }
 }

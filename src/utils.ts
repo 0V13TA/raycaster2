@@ -36,9 +36,9 @@ export function colorToRGBA(
   b = Math.min(255, Math.max(0, Math.round(b)));
 
   // Handle alpha normalization
-  if (normalizeAlpha) {
+  if (normalizeAlpha && a > 1) {
     // If alpha > 1, assume it's 0-255 range, convert to 0-1
-    a = a > 1 ? a / 255 : a;
+    a = a / 255;
   }
   a = Math.min(1, Math.max(0, a));
 
@@ -127,15 +127,15 @@ export const Input = {
 
   init(): void {
     window.addEventListener("keydown", (e: KeyboardEvent) => {
-      if (!this.held.has(e.code)) {
-        this.pressed.add(e.code);
+      if (!this.held.has(e.code as KeyCode)) {
+        this.pressed.add(e.code as KeyCode);
       }
-      this.held.add(e.code);
+      this.held.add(e.code as KeyCode);
     });
 
     window.addEventListener("keyup", (e: KeyboardEvent) => {
-      this.held.delete(e.code);
-      this.released.add(e.code);
+      this.held.delete(e.code as KeyCode);
+      this.released.add(e.code as KeyCode);
     });
   },
 

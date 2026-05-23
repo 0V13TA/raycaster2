@@ -34,7 +34,9 @@ const p = (x: number, y: number): [number, number] => [x * W, y * H];
 // --- 1. DEFINE BEAUTIFUL THEMED MATERIALS ---
 const outerWallMat = new Material({ color: [60, 60, 75, 1] }); // Dark slate gray
 const castleTowerMat = new Material({ color: [180, 100, 40, 1] }); // Warm brick orange/red
-const pillarsMat = new Material({ color: [40, 160, 100, 1] }); // Jade/Emerald green
+const pillarsMat = new Material({
+  color: [40, 160, 100, 1],
+}); // Jade/Emerald green
 
 // --- 2. THE CASTLE COURTYARD MAP CONFIGURATION ---
 const castleMap: Boundary[] = [];
@@ -90,8 +92,28 @@ createWall(p(0.17, 0.7), p(0.2, 0.7), pillarsMat);
 // Spawn the player safely outside the central fortress tower
 const player = new Player([W * 0.15, H * 0.5]);
 
+// A. Create a textured sky material using an image asset link
+const skyMaterial = new Material({
+  isCeiling: true,
+  color: [15, 15, 30, 1], // Fallback if image path breaks
+  textureSrc: "../public/pics/wood.png", // Path to your sky image asset
+});
+
+// B. Create a solid floor material (no image provided, will safely draw fallback)
+const groundMaterial = new Material({
+  isFloor: true,
+  color: [40, 35, 30, 1],
+  textureSrc: "../public/pics/greystone.png", // Path to your sky image asset
+});
+
 // Create a pseudo-3D scene manager
-const scene = new Scene(player, canvas2.width, canvas2.height);
+const scene = new Scene(
+  player,
+  canvas2.width,
+  canvas2.height,
+  skyMaterial,
+  groundMaterial,
+);
 
 // Load our new vector map layout into the scene renderer
 castleMap.forEach((wall) => {
