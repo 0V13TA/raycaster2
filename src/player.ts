@@ -90,10 +90,10 @@ export default class Player {
 
   update(dt: number, walls: Boundary[]) {
     // --- 1. HANDLE CAMERA VIEW ROTATION ---
-    if (Input.isHeld("ArrowLeft") || Input.isHeld("KeyA")) {
+    if (Input.isHeld("ArrowLeft")) {
       this.viewAngle -= 140 * dt; // Turn left (degrees per second)
     }
-    if (Input.isHeld("ArrowRight") || Input.isHeld("KeyD")) {
+    if (Input.isHeld("ArrowRight")) {
       this.viewAngle += 140 * dt; // Turn right
     }
     this.lookAt(this.viewAngle);
@@ -109,6 +109,15 @@ export default class Player {
     if (Input.isHeld("ArrowDown") || Input.isHeld("KeyS")) {
       moveX -= this.dir[0];
       moveY -= this.dir[1];
+    }
+
+    if (Input.isHeld("KeyA")) {
+      moveX += this.dir[1];
+      moveY += this.dir[0];
+    }
+    if (Input.isHeld("KeyD")) {
+      moveX -= this.dir[1];
+      moveY -= this.dir[0];
     }
 
     // --- 3. APPLY POSITION PROJECTIONS & RESOLVE OBSTACLES ---

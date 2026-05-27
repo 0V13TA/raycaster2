@@ -1,4 +1,3 @@
-// src/main.ts
 import "./style.css";
 import Boundary from "./boundaries";
 import { Input, TimerManager } from "./utils";
@@ -9,6 +8,7 @@ import Material from "./Material";
 //#region Init
 export const canvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+canvas.classList.add("smallCanvas");
 
 const canvas2 = document.createElement("canvas");
 const ctx2 = canvas2.getContext("2d") as CanvasRenderingContext2D;
@@ -16,11 +16,11 @@ const ctx2 = canvas2.getContext("2d") as CanvasRenderingContext2D;
 document.body.appendChild(canvas);
 document.body.appendChild(canvas2);
 
-canvas.width = 400;
-canvas.height = 400;
+canvas.width = 200;
+canvas.height = 200;
 
-canvas2.width = 400;
-canvas2.height = 400;
+canvas2.width = innerWidth * 0.99;
+canvas2.height = innerHeight * 0.99;
 
 let animationID: number;
 let lastTime: number = 0;
@@ -34,15 +34,15 @@ const p = (x: number, y: number): [number, number] => [x * W, y * H];
 // --- 1. DEFINE BEAUTIFUL THEMED MATERIALS ---
 const outerWallMat = new Material({
   color: [60, 60, 75, 1],
-  textureSrc: "../public/pics/mossy.png",
+  // textureSrc: "/pics/mossy.png",
 }); // Dark slate gray
 const castleTowerMat = new Material({
   color: [180, 100, 40, 1],
-  textureSrc: "../public/pics/purplestone.png",
+  // textureSrc: "/pics/purplestone.png",
 }); // Warm brick orange/red
 const pillarsMat = new Material({
   color: [40, 160, 100, 1],
-  textureSrc: "../public/pics/redbrick.png",
+  // textureSrc: "/pics/redbrick.png",
 }); // Jade/Emerald green
 
 // --- 2. THE CASTLE COURTYARD MAP CONFIGURATION ---
@@ -103,14 +103,14 @@ const player = new Player([W * 0.15, H * 0.5]);
 const skyMaterial = new Material({
   isCeiling: true,
   color: [15, 15, 30, 1], // Fallback if image path breaks
-  textureSrc: "../public/pics/wood.png", // Path to your sky image asset
+  textureSrc: "/pics/wood.png", // Path to your sky image asset
 });
 
 // B. Create a solid floor material (no image provided, will safely draw fallback)
 const groundMaterial = new Material({
   isFloor: true,
   color: [40, 35, 30, 1],
-  textureSrc: "../public/pics/greystone.png", // Path to your sky image asset
+  textureSrc: "/pics/greystone.png", // Path to your sky image asset
 });
 
 // Create a pseudo-3D scene manager

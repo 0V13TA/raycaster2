@@ -12,6 +12,12 @@ body {
   gap: 20px;
 }
 
+canvas.smallCanvas {
+  top: 10px;
+  left: 10px;
+  position: fixed;
+}
+
 canvas {
   /* inset: 0; */
   /* margin: auto; */
